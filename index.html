@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Regex Crossword — Learn Regex by Solving Puzzles</title>
+<meta name="description" content="Learn regular expressions by solving crossword puzzles. Each row and column has a regex pattern — fill in the grid to match them all.">
+<meta property="og:title" content="Regex Crossword — Learn Regex by Solving Puzzles">
+<meta property="og:description" content="Learn regular expressions by solving crossword puzzles where every row and column must match a regex pattern.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://regex-crossword.pages.dev">
+<meta property="og:image" content="https://regex-crossword.pages.dev/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Regex Crossword — Learn Regex by Solving Puzzles">
+<meta name="twitter:description" content="Learn regex by solving crossword puzzles. 10 built-in puzzles, hints, timer, scoring.">
+<link rel="canonical" href="https://regex-crossword.pages.dev">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Regex Crossword","url":"https://regex-crossword.pages.dev","description":"Learn regular expressions by solving crossword puzzles where every row and column must match a regex pattern.","applicationCategory":"Game","operatingSystem":"Any","browserRequirements":"Requires JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--surface:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--accent:#58a6ff;--green:#3fb950;--red:#f85149;--yellow:#d29922;--purple:#bc8cff}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:900px;margin:0 auto;padding:0 20px}
+header{text-align:center;padding:40px 0 20px}
+header h1{font-size:2rem;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+header p{color:var(--muted);margin-top:6px;font-size:1.05rem}
+/* Controls */
+.controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:20px 0}
+.controls button,.controls select{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:6px;cursor:pointer;font-size:.9rem}
+.controls button:hover,.controls select:hover{border-color:var(--accent)}
+.controls button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.controls button.primary:hover{opacity:.85}
+.stats{display:flex;gap:24px;justify-content:center;margin:12px 0;font-size:.95rem}
+.stats span{color:var(--muted)}.stats b{color:var(--text)}
+/* Grid area */
+#game-area{display:flex;flex-direction:column;align-items:center;margin:20px 0}
+.grid-wrapper{display:inline-grid;gap:0;position:relative}
+.corner{background:transparent}
+.row-label,.col-label{display:flex;align-items:center;justify-content:center;background:var(--surface);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:.78rem;color:var(--purple);padding:2px 4px;border:1px solid var(--border);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.col-label{border-bottom:2px solid var(--accent)}
+.row-label{border-right:2px solid var(--accent)}
+.cell{width:52px;height:52px;text-align:center;font-size:1.4rem;font-weight:700;background:var(--surface);border:1px solid var(--border);color:var(--text);text-transform:lowercase;caret-color:var(--accent);outline:none;text-transform:none}
+.cell:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(88,166,255,.3)}
+.cell.valid{border-color:var(--green);background:rgba(63,185,80,.08)}
+.cell.invalid{border-color:var(--red);background:rgba(248,81,73,.08)}
+.cell.hinted{border-color:var(--yellow);background:rgba(210,153,34,.1)}
+/* Status */
+#status{text-align:center;margin:16px 0;font-size:1.1rem;min-height:1.8em}
+/* Sections */
+section{margin:60px 0}
+section h2{font-size:1.5rem;margin-bottom:16px;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:8px}
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px}
+.feature-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px}
+.feature-card h3{color:var(--accent);margin-bottom:8px;font-size:1.1rem}
+.feature-card p{color:var(--muted);font-size:.92rem}
+/* How to play */
+.how-to-play ol{padding-left:24px;color:var(--muted)}
+.how-to-play ol li{margin:8px 0}
+.regex-table{width:100%;border-collapse:collapse;margin:16px 0}
+.regex-table th,.regex-table td{border:1px solid var(--border);padding:8px 12px;text-align:left;font-size:.9rem}
+.regex-table th{background:var(--surface);color:var(--accent)}
+.regex-table td code{background:var(--surface);padding:2px 6px;border-radius:3px;color:var(--purple);font-family:monospace}
+/* FAQ */
+.faq details{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin:10px 0;padding:14px 18px}
+.faq summary{cursor:pointer;font-weight:600;color:var(--text)}
+.faq p{margin-top:8px;color:var(--muted)}
+/* Email */
+.email-widget{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:24px;text-align:center;max-width:500px;margin:0 auto}
+.email-widget h3{margin-bottom:8px}
+.email-widget p{color:var(--muted);margin-bottom:14px;font-size:.92rem}
+.email-form{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.email-form input{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:6px;font-size:.9rem;width:260px}
+.email-form button{background:var(--accent);color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:.9rem}
+.email-form button:hover{opacity:.85}
+/* Footer */
+footer{text-align:center;padding:40px 0;border-top:1px solid var(--border);margin-top:60px;color:var(--muted);font-size:.85rem}
+footer a{margin:0 10px}
+/* Puzzle selector */
+.puzzle-select{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:10px 0}
+.puzzle-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-weight:600;font-size:.85rem;display:flex;align-items:center;justify-content:center}
+.puzzle-btn:hover{border-color:var(--accent)}
+.puzzle-btn.solved{background:var(--green);color:#fff;border-color:var(--green)}
+.puzzle-btn.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(88,166,255,.3)}
+/* Cross links */
+.cross-links{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:30px 0}
+.cross-links a{background:var(--surface);border:1px solid var(--border);padding:10px 18px;border-radius:6px;font-size:.9rem}
+.cross-links a:hover{border-color:var(--accent);text-decoration:none}
+@media(max-width:600px){.cell{width:42px;height:42px;font-size:1.1rem}.row-label,.col-label{font-size:.7rem}header h1{font-size:1.4rem}.stats{gap:14px;font-size:.85rem}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>Regex Crossword</h1>
+<p>Learn Regex by Solving Puzzles</p>
+</header>
+
+<div class="controls">
+<select id="size-select">
+<option value="3">3 &times; 3</option>
+<option value="4">4 &times; 4</option>
+<option value="5">5 &times; 5</option>
+</select>
+<button class="primary" onclick="newPuzzle()">New Puzzle</button>
+<button onclick="checkSolution()">Check</button>
+<button onclick="useHint()">Hint</button>
+<button onclick="resetTimer()">Reset Timer</button>
+</div>
+
+<div class="puzzle-select" id="puzzle-nav"></div>
+
+<div class="stats">
+<span>⏱ <b id="timer">00:00</b></span>
+<span>💡 Hints: <b id="hint-count">0</b></span>
+<span>🏆 Score: <b id="score">—</b></span>
+</div>
+
+<div id="game-area"></div>
+<div id="status"></div>
+
+<section class="how-to-play">
+<h2>How to Play</h2>
+<ol>
+<li>Choose a puzzle size and select a puzzle number.</li>
+<li>Each row and column shows a <strong>regex pattern</strong> — fill every cell with a single character so the full row/column string matches the regex.</li>
+<li>Click <strong>Check</strong> to validate. Green cells match their row and column regexes; red cells don't.</li>
+<li>Stuck? Use <strong>Hint</strong> to reveal one cell (costs score points).</li>
+<li>Solve the puzzle as fast as you can with the fewest hints for the best score!</li>
+</ol>
+<h2 style="margin-top:24px">Regex Cheat Sheet</h2>
+<table class="regex-table">
+<tr><th>Pattern</th><th>Meaning</th><th>Example</th></tr>
+<tr><td><code>.</code></td><td>Any single character</td><td><code>a</code>, <code>5</code>, <code>!</code></td></tr>
+<tr><td><code>[abc]</code></td><td>One of a, b, or c</td><td><code>a</code></td></tr>
+<tr><td><code>[a-z]</code></td><td>Any lowercase letter</td><td><code>m</code></td></tr>
+<tr><td><code>[0-9]</code></td><td>Any digit</td><td><code>7</code></td></tr>
+<tr><td><code>[^x]</code></td><td>Any character except x</td><td><code>a</code> (not <code>x</code>)</td></tr>
+<tr><td><code>^</code> / <code>$</code></td><td>Start / end of string</td><td>anchors</td></tr>
+<tr><td><code>*</code></td><td>Zero or more of previous</td><td><code>ab*</code> → <code>a</code>, <code>abb</code></td></tr>
+<tr><td><code>+</code></td><td>One or more of previous</td><td><code>a+</code> → <code>a</code>, <code>aaa</code></td></tr>
+<tr><td><code>?</code></td><td>Zero or one of previous</td><td><code>colou?r</code> → <code>color</code>, <code>colour</code></td></tr>
+<tr><td><code>{n}</code></td><td>Exactly n times</td><td><code>a{3}</code> → <code>aaa</code></td></tr>
+<tr><td><code>|</code></td><td>Or</td><td><code>cat|dog</code></td></tr>
+<tr><td><code>()</code></td><td>Grouping</td><td><code>(ab)+</code> → <code>abab</code></td></tr>
+<tr><td><code>\d</code></td><td>Any digit (<code>[0-9]</code>)</td><td><code>5</code></td></tr>
+<tr><td><code>\w</code></td><td>Word char (<code>[a-zA-Z0-9_]</code>)</td><td><code>k</code></td></tr>
+<tr><td><code>\s</code></td><td>Whitespace</td><td>space, tab</td></tr>
+</table>
+</section>
+
+<section>
+<h2>Features</h2>
+<div class="features">
+<div class="feature-card"><h3>🧩 10 Built-in Puzzles</h3><p>Progressive difficulty from beginner-friendly 3×3 to brain-bending 5×5 grids.</p></div>
+<div class="feature-card"><h3>💡 Smart Hints</h3><p>Stuck on a cell? Reveal the correct character. Each hint reduces your final score.</p></div>
+<div class="feature-card"><h3>⏱ Live Timer</h3><p>Track your solve time. Faster solves earn higher scores.</p></div>
+<div class="feature-card"><h3>📊 Scoring System</h3><p>Points based on speed and hints used. Challenge yourself to beat your best.</p></div>
+</div>
+</section>
+
+<section class="faq">
+<h2>Frequently Asked Questions</h2>
+<details><summary>Do I need to know regex to play?</summary><p>No! The built-in puzzles start simple. The cheat sheet above teaches you the basics as you go. Each puzzle helps you learn common regex patterns naturally.</p></details>
+<details><summary>How is the score calculated?</summary><p>Base score is 1000 points. Points are deducted based on solve time (−2 per second) and hints used (−100 per hint). Minimum score is 0.</p></details>
+<details><summary>Can I create my own puzzles?</summary><p>Not yet — but 10 handcrafted puzzles across three grid sizes give you plenty to practice with. More puzzles and a custom puzzle editor are planned for future updates.</p></details>
+</section>
+
+<section>
+<h2>Stay Updated</h2>
+<div class="email-widget">
+<h3>Get New Puzzles in Your Inbox</h3>
+<p>We'll send you weekly regex challenges and tips. No spam, ever.</p>
+<div class="email-form">
+<input type="email" id="email-input" placeholder="you@example.com" aria-label="Email address">
+<button onclick="subscribe()">Subscribe</button>
+</div>
+<p id="email-msg" style="margin-top:10px;color:var(--green);display:none"></p>
+</div>
+</section>
+
+<section>
+<h2>More Resources</h2>
+<div class="cross-links">
+<a href="https://regex101.com" target="_blank" rel="noopener">regex101 — Test Regex</a>
+<a href="https://regexcrossword.com" target="_blank" rel="noopener">Original RegexCrossword</a>
+<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions" target="_blank" rel="noopener">MDN Regex Guide</a>
+</div>
+</section>
+
+<footer>
+<p>Regex Crossword &mdash; Learn Regex by Solving Puzzles</p>
+<p>
+<a href="/">Home</a>
+<a href="#game-area">Play</a>
+<a href="sitemap.xml">Sitemap</a>
+</p>
+</footer>
+</div>
+
+<script>
+const PUZZLES=[
+{id:1,size:3,rows:['[a-z]{3}','[aeiou].{2}','[^a]{3}'],cols:['[a-z]{3}','[a-z]{3}','[a-z]{3}'],answer:['cat','oak','elf']},
+{id:2,size:3,rows:['[a-z]{3}','[0-9]{3}','[a-z]{2}[0-9]'],cols:['[a-z0-9]{3}','[a-z0-9]{3}','[a-z0-9]{3}'],answer:['cat','372','ab5']},
+{id:3,size:3,rows:['a.c','[b-d].t','c[a-z]t'],cols:['a[bc]c','.e.','c.t'],answer:['aec','bet','cet']},
+{id:4,size:4,rows:['[a-z]{4}','[aeiou]{4}','[a-z]{4}','[a-z]{4}'],cols:['[a-z]{4}','[a-z]{4}','[a-z]{4}','[a-z]{4}'],answer:['abcd','aeio','lmnp','rstu']},
+{id:5,size:4,rows:['[0-9][a-z]{3}','[a-z]{2}[0-9][a-z]','[a-z][0-9][a-z]{2}','[a-z]{3}[0-9]'],cols:['[0-9a-z]{4}','[a-z0-9]{4}','[a-z0-9]{4}','[a-z0-9]{4}'],answer:['1abc','ab2d','c3ef','ghi4']},
+{id:6,size:4,rows:['[a-z][0-9]{3}','[0-9][a-z]{3}','[a-z]{2}[0-9]{2}','[0-9]{2}[a-z]{2}'],cols:['[a-z0-9]{4}','[a-z0-9]{4}','[a-z0-9]{4}','[a-z0-9]{4}'],answer:['a123','4bcd','ef56','78gh']},
+{id:7,size:4,rows:['[a-z]+','[a-z]*[0-9]+','[0-9]{2}[a-z]{2}','[a-z]{2}[0-9]{2}'],cols:['[a-z0-9]{4}','[a-z0-9]{4}','[a-z0-9]{4}','[a-z0-9]{4}'],answer:['abcd','ef12','34gh','ij56']},
+{id:8,size:5,rows:['[a-z]{5}','[aeiou]{5}','[a-z]{5}','[a-z]{5}','[a-z]{5}'],cols:['[a-z]{5}','[a-z]{5}','[a-z]{5}','[a-z]{5}','[a-z]{5}'],answer:['abcde','aeiou','fghij','klmno','pqrst']},
+{id:9,size:5,rows:['[0-9][a-z]{4}','[a-z]{2}[0-9][a-z]{2}','[a-z][0-9]{3}[a-z]','[a-z]{3}[0-9]{2}','[a-z]{4}[0-9]'],cols:['[0-9a-z]{5}','[a-z0-9]{5}','[a-z0-9]{5}','[a-z0-9]{5}','[a-z0-9]{5}'],answer:['1abcd','ef2gh','i345j','klm67','nopq9']},
+{id:10,size:5,rows:['[a-z]{5}','[a-z]{3}[0-9]{2}','[0-9][a-z]{4}','[a-z]{2}[0-9][a-z]{2}','[a-z]{4}[0-9]'],cols:['[a-z0-9]{5}','[a-z0-9]{5}','[a-z0-9]{5}','[a-z0-9]{5}','[a-z0-9]{5}'],answer:['abcde','fgh12','3ijkl','mn4op','qrst5']}
+];
+
+let currentPuzzle=null, hints=0, timerSec=0, timerInterval=null, solved=new Set();
+
+function tryLoadSolved(){try{const s=localStorage.getItem('rx-cw-solved');if(s)solved=new Set(JSON.parse(s))}catch(e){}}
+function saveSolved(){try{localStorage.setItem('rx-cw-solved',JSON.stringify([...solved]))}catch(e){}}
+
+function newPuzzle(){
+  const size=+document.getElementById('size-select').value;
+  const nav=document.getElementById('puzzle-nav');
+  nav.innerHTML='';
+  const filtered=PUZZLES.filter(p=>p.size===size);
+  filtered.forEach(p=>{
+    const b=document.createElement('button');
+    b.className='puzzle-btn'+(solved.has(p.id)?' solved':'');
+    b.textContent=p.id;
+    b.onclick=()=>loadPuzzle(p);
+    nav.appendChild(b);
+  });
+  if(filtered.length)loadPuzzle(filtered[0]);
+}
+
+function loadPuzzle(p){
+  currentPuzzle=p; hints=0;
+  document.getElementById('hint-count').textContent='0';
+  document.getElementById('score').textContent='—';
+  document.getElementById('status').textContent='';
+  resetTimer(); startTimer();
+  // Highlight active button
+  document.querySelectorAll('.puzzle-btn').forEach(b=>{
+    b.classList.toggle('active',+b.textContent===p.id);
+  });
+  renderGrid(p);
+}
+
+function renderGrid(p){
+  const area=document.getElementById('game-area');
+  const n=p.size;
+  // grid: (n+1) cols x (n+1) rows  — first row/col for labels
+  const g=document.createElement('div');
+  g.className='grid-wrapper';
+  g.style.gridTemplateColumns=`auto repeat(${n},52px)`;
+  g.style.gridTemplateRows=`auto repeat(${n},52px)`;
+  // corner
+  const corner=document.createElement('div');corner.className='corner';g.appendChild(corner);
+  // col labels
+  for(let c=0;c<n;c++){
+    const lbl=document.createElement('div');lbl.className='col-label';
+    lbl.textContent=p.cols[c];lbl.title=p.cols[c];
+    lbl.style.fontSize=n>4?'.65rem':'.78rem';
+    g.appendChild(lbl);
+  }
+  // rows
+  for(let r=0;r<n;r++){
+    const lbl=document.createElement('div');lbl.className='row-label';
+    lbl.textContent=p.rows[r];lbl.title=p.rows[r];
+    lbl.style.fontSize=n>4?'.65rem':'.78rem';
+    g.appendChild(lbl);
+    for(let c=0;c<n;c++){
+      const inp=document.createElement('input');
+      inp.type='text';inp.maxLength=1;inp.className='cell';
+      inp.dataset.r=r;inp.dataset.c=c;
+      inp.setAttribute('aria-label',`Row ${r+1} Col ${c+1}`);
+      inp.addEventListener('input',onCellInput);
+      inp.addEventListener('keydown',onCellKey);
+      g.appendChild(inp);
+    }
+  }
+  area.innerHTML='';area.appendChild(g);
+}
+
+function onCellInput(e){
+  e.target.value=e.target.value.slice(-1).toLowerCase();
+  e.target.classList.remove('valid','invalid','hinted');
+}
+
+function onCellKey(e){
+  const t=e.target,r=+t.dataset.r,c=+t.dataset.c,n=currentPuzzle.size;
+  let nr=r,nc=c;
+  if(e.key==='ArrowRight')nc=Math.min(c+1,n-1);
+  else if(e.key==='ArrowLeft')nc=Math.max(c-1,0);
+  else if(e.key==='ArrowDown')nr=Math.min(r+1,n-1);
+  else if(e.key==='ArrowUp')nr=Math.max(r-1,0);
+  else if(e.key==='Backspace'&&t.value===''){nc=Math.max(c-1,0);}
+  else return;
+  if(nr!==r||nc!==c){e.preventDefault();focusCell(nr,nc);}
+}
+
+function focusCell(r,c){
+  const cell=document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+  if(cell)cell.focus();
+}
+
+function getGridValues(){
+  const cells=document.querySelectorAll('.cell');
+  const n=currentPuzzle.size;
+  const grid=[];
+  for(let r=0;r<n;r++){grid[r]=[];for(let c=0;c<n;c++)grid[r][c]='';}
+  cells.forEach(c=>{grid[+c.dataset.r][+c.dataset.c]=c.value;});
+  return grid;
+}
+
+function checkSolution(){
+  if(!currentPuzzle)return;
+  const grid=getGridValues(), n=currentPuzzle.size, p=currentPuzzle;
+  let allFilled=true, allValid=true;
+  // Check rows
+  for(let r=0;r<n;r++){
+    const row=grid[r].join('');
+    if(row.length<n){allFilled=false;}
+    const re=new RegExp('^'+p.rows[r]+'$');
+    const ok=re.test(row);
+    for(let c=0;c<n;c++){
+      const cell=document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+      if(!cell.classList.contains('hinted')){
+        if(!ok)cell.classList.add('invalid');
+        else cell.classList.remove('invalid');
+      }
+    }
+    if(!ok)allValid=false;
+  }
+  // Check cols
+  for(let c=0;c<n;c++){
+    const col=grid.map(r=>r[c]).join('');
+    const re=new RegExp('^'+p.cols[c]+'$');
+    const ok=re.test(col);
+    for(let r=0;r<n;r++){
+      const cell=document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+      if(!ok&&!cell.classList.contains('hinted'))cell.classList.add('invalid');
+    }
+    if(!ok)allValid=false;
+  }
+  // Mark valid cells
+  document.querySelectorAll('.cell').forEach(cell=>{
+    if(!cell.classList.contains('invalid')&&!cell.classList.contains('hinted')&&cell.value){
+      cell.classList.add('valid');cell.classList.remove('invalid');
+    }
+  });
+  const status=document.getElementById('status');
+  if(!allFilled){status.innerHTML='<span style="color:var(--yellow)">Fill in all cells first!</span>';return;}
+  if(allValid){
+    stopTimer();
+    const score=calcScore();
+    status.innerHTML=`<span style="color:var(--green)">🎉 Solved! Score: ${score} points (Time: ${fmtTime(timerSec)}, Hints: ${hints})</span>`;
+    solved.add(p.id);saveSolved();
+    document.querySelectorAll('.puzzle-btn').forEach(b=>{if(+b.textContent===p.id)b.classList.add('solved');});
+  }else{
+    status.innerHTML='<span style="color:var(--red)">Some cells don\'t match their row or column regex. Keep trying!</span>';
+  }
+}
+
+function useHint(){
+  if(!currentPuzzle)return;
+  const grid=getGridValues(),n=currentPuzzle.size,ans=currentPuzzle.answer;
+  // Find an empty or wrong cell
+  let candidates=[];
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++){
+    const cell=document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+    if(!cell.classList.contains('hinted')&&cell.value!==ans[r][c])candidates.push({r,c,cell});
+  }
+  if(!candidates.length){document.getElementById('status').innerHTML='<span style="color:var(--green)">No more hints needed!</span>';return;}
+  const pick=candidates[Math.floor(Math.random()*candidates.length)];
+  pick.cell.value=ans[pick.r][pick.c];
+  pick.cell.classList.add('hinted');pick.cell.classList.remove('invalid','valid');
+  hints++;document.getElementById('hint-count').textContent=hints;
+  document.getElementById('status').innerHTML=`<span style="color:var(--yellow)">Hint used! Cell [${pick.r+1},${pick.c+1}] revealed.</span>`;
+}
+
+function calcScore(){
+  let s=1000;
+  s-=timerSec*2;
+  s-=hints*100;
+  return Math.max(0,Math.round(s));
+}
+
+function startTimer(){
+  stopTimer();timerSec=0;updateTimerDisplay();
+  timerInterval=setInterval(()=>{timerSec++;updateTimerDisplay();},1000);
+}
+function stopTimer(){if(timerInterval){clearInterval(timerInterval);timerInterval=null;}}
+function resetTimer(){stopTimer();timerSec=0;hints=0;document.getElementById('hint-count').textContent='0';updateTimerDisplay();}
+function updateTimerDisplay(){document.getElementById('timer').textContent=fmtTime(timerSec);}
+function fmtTime(s){const m=Math.floor(s/60);return `${String(m).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;}
+
+function subscribe(){
+  const inp=document.getElementById('email-input');
+  const msg=document.getElementById('email-msg');
+  if(!inp.value||!inp.value.includes('@')){msg.style.display='block';msg.style.color='var(--red)';msg.textContent='Please enter a valid email.';return;}
+  msg.style.display='block';msg.style.color='var(--green)';msg.textContent='✓ Subscribed! Check your inbox for the first puzzle.';
+  inp.value='';
+}
+
+// Init
+tryLoadSolved();
+newPuzzle();
+</script>
+</body>
+</html>
